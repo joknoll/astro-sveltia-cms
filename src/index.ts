@@ -8,12 +8,12 @@ export type SveltiaOptions = {
    * The route where the CMS will be served.
    * @default "/admin"
    */
-  adminRoute?: string;
+  route?: string;
   /**
    * The page title for the CMS admin interface.
-   * @default "Content Management"
+   * @default "Sveltia CMS"
    */
-  adminTitle?: string;
+  title?: string;
   /**
    * The Sveltia CMS configuration object.
    */
@@ -21,8 +21,8 @@ export type SveltiaOptions = {
 };
 
 export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
-  const adminRoute = options.adminRoute || "/admin";
-  const adminTitle = options.adminTitle || "Content Management";
+  const route = options.route || "/admin";
+  const title = options.title || "Sveltia CMS";
   const virtualModuleId = "virtual:astro-sveltia-cms/config";
   const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
@@ -32,7 +32,7 @@ export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
       "astro:config:setup": ({ injectRoute, updateConfig, logger }) => {
         // Inject the admin page route
         injectRoute({
-          pattern: adminRoute,
+          pattern: route,
           entrypoint: new URL("./admin.astro", import.meta.url),
         });
 
@@ -51,7 +51,7 @@ export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
                   if (id === resolvedVirtualModuleId) {
                     return `
                       export const config = ${JSON.stringify(options.config)};
-                      export const title = ${JSON.stringify(adminTitle)};
+                      export const title = ${JSON.stringify(title)};
                     `;
                   }
                 },
@@ -60,7 +60,7 @@ export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
           },
         });
 
-        logger.info(`Sveltia CMS injected at ${adminRoute}`);
+        logger.info(`Sveltia CMS injected at ${route}`);
       },
     },
   };

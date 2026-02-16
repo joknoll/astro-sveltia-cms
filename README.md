@@ -19,7 +19,8 @@ import sveltia from "astro-sveltia-cms";
 export default defineConfig({
   integrations: [
     sveltia({
-      adminRoute: "/cms", // Optional, defaults to "/admin"
+      route: "/cms", // Optional, defaults to "/admin"
+      title: "My CMS", // Optional, defaults to "Sveltia CMS"
       config: {
         load_config_file: false,
         backend: {
