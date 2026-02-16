@@ -10,6 +10,11 @@ export type SveltiaOptions = {
    */
   adminRoute?: string;
   /**
+   * The page title for the CMS admin interface.
+   * @default "Content Management"
+   */
+  adminTitle?: string;
+  /**
    * The Sveltia CMS configuration object.
    */
   config: CmsConfig;
@@ -17,6 +22,7 @@ export type SveltiaOptions = {
 
 export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
   const adminRoute = options.adminRoute || "/admin";
+  const adminTitle = options.adminTitle || "Content Management";
   const virtualModuleId = "virtual:astro-sveltia-cms/config";
   const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
@@ -43,7 +49,10 @@ export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
                 },
                 load(id) {
                   if (id === resolvedVirtualModuleId) {
-                    return `export default ${JSON.stringify(options.config)}`;
+                    return `
+                      export const config = ${JSON.stringify(options.config)};
+                      export const title = ${JSON.stringify(adminTitle)};
+                    `;
                   }
                 },
               },

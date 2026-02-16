@@ -13,8 +13,11 @@ export const prerender = true;
   <body>
     <script>
       import { init } from "@sveltia/cms";
-      import config from "virtual:astro-sveltia-cms/config";
+      import { config, title } from "virtual:astro-sveltia-cms/config";
       
+      if (title) {
+        document.title = title;
+      }
       init({ config });
     </script>
   </body>

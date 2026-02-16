@@ -7,6 +7,7 @@ export default defineConfig({
   integrations: [
     sveltia({
       adminRoute: '/cms',
+      adminTitle: 'My Custom CMS',
       config: {
         load_config_file: false,
         backend: {

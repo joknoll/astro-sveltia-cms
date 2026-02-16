@@ -1,5 +1,4 @@
 declare module "virtual:astro-sveltia-cms/config" {
-  import type { CmsConfig } from "@sveltia/cms";
-  const config: CmsConfig;
-  export default config;
+  export const config: import("./index.js").CmsConfig;
+  export const title: string;
 }
