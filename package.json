@@ -1,0 +1,27 @@
+{
+  "name": "astro-sveltia-cms",
+  "version": "0.0.1",
+  "description": "Sveltia CMS integration for Astro",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./admin.astro": "./dist/admin.astro"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && cp src/admin.astro dist/admin.astro",
+    "dev": "tsc --watch"
+  },
+  "peerDependencies": {
+    "@sveltia/cms": "^0.140.4",
+    "astro": "^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "@sveltia/cms": "^0.140.4",
+    "@types/node": "^20.0.0",
+    "astro": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}

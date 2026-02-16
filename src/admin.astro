@@ -1,0 +1,21 @@
+---
+// @ts-nocheck
+export const prerender = true;
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Content Management</title>
+  </head>
+  <body>
+    <script>
+      import { init } from "@sveltia/cms";
+      import config from "virtual:astro-sveltia-cms/config";
+      
+      init({ config });
+    </script>
+  </body>
+</html>
