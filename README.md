@@ -6,6 +6,10 @@ Sveltia CMS integration for Astro.
 
 ```bash
 npm install astro-sveltia-cms @sveltia/cms
+
+bun add astro-sveltia-cms @sveltia/cms
+
+deno add astro-sveltia-cms @sveltia/cms
 ```
 
 ## Usage
@@ -41,12 +45,27 @@ export default defineConfig({
 This will serve the Sveltia CMS admin interface at `/cms` (or `/admin` by default).
 The configuration object is passed directly to `CMS.init()`.
 
-## TypeScript
+## Backend Configuration
 
-You can import `CmsConfig` from `@sveltia/cms` to type your configuration (if supported by your version of Sveltia CMS).
+The `config.backend` property determines where your content is stored. Sveltia CMS supports various Git-based backends and a local development backend.
 
-```ts
-import type { CmsConfig } from "@sveltia/cms";
-
-const config: CmsConfig = { ... };
+### GitHub
+```js
+backend: {
+  name: "github",
+  repo: "username/repo",
+  branch: "main",
+}
 ```
+
+### Gitea / Codeberg
+```js
+backend: {
+  name: "gitea",
+  repo: "username/repo",
+  base_url: "https://codeberg.org",
+  api_root: "https://codeberg.org/api/v1",
+}
+```
+
+For more details on backend configuration, including authentication and other providers, see the [Sveltia CMS Backend Documentation](https://sveltiacms.app/en/docs/backends).
