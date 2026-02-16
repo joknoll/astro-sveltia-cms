@@ -5,11 +5,11 @@ Sveltia CMS integration for Astro.
 ## Installation
 
 ```bash
-npm install astro-sveltia-cms @sveltia/cms
+npm install astro-sveltia-cms
 
-bun add astro-sveltia-cms @sveltia/cms
+bun add astro-sveltia-cms
 
-deno add astro-sveltia-cms @sveltia/cms
+deno add astro-sveltia-cms
 ```
 
 ## Usage
