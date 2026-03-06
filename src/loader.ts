@@ -13,7 +13,7 @@ import type {
 /**
  * The file formats that use frontmatter (body is separate from data).
  */
-const frontmatterFormats = new Set([
+export const frontmatterFormats = new Set([
   "yaml-frontmatter",
   "toml-frontmatter",
   "json-frontmatter",
@@ -24,7 +24,7 @@ const frontmatterFormats = new Set([
  * Check if a field should be optional in the Zod schema.
  * Sveltia CMS defaults `required` to `true` for visible fields.
  */
-function isOptionalField(field: Field): boolean {
+export function isOptionalField(field: Field): boolean {
   if (!("required" in field)) return false;
   return field.required === false;
 }
@@ -32,7 +32,7 @@ function isOptionalField(field: Field): boolean {
 /**
  * Convert select field options to an array of values.
  */
-function getSelectValues(
+export function getSelectValues(
   options: SelectFieldValue[] | { label: string; value: SelectFieldValue }[],
 ): SelectFieldValue[] {
   if (options.length === 0) return [];
@@ -46,7 +46,7 @@ function getSelectValues(
  * Create a Zod schema for select field values.
  * Handles string-only enums, and mixed types (string | number | null).
  */
-function selectValuesToZod(values: SelectFieldValue[]): z.ZodTypeAny {
+export function selectValuesToZod(values: SelectFieldValue[]): z.ZodTypeAny {
   const allStrings = values.every((v) => typeof v === "string");
   if (allStrings && values.length > 0) {
     return z.enum(values as [string, ...string[]]);
@@ -66,7 +66,7 @@ function selectValuesToZod(values: SelectFieldValue[]): z.ZodTypeAny {
  * Convert a single Sveltia CMS field definition to a Zod schema type.
  * This recursively handles nested fields (object, list).
  */
-function fieldToZod(field: Field): z.ZodTypeAny {
+export function fieldToZod(field: Field): z.ZodTypeAny {
   const widget = "widget" in field ? field.widget : "string";
 
   switch (widget) {
@@ -341,7 +341,7 @@ export function sveltiaSchema(
  * Read the CMS config from the codegen JSON file written by the integration.
  * Located at `.astro/integrations/astro-sveltia-cms/config.json` relative to the project root.
  */
-function readCmsConfig(): CmsConfig {
+export function readCmsConfig(): CmsConfig {
   // Astro runs with cwd set to the project root
   const configPath = join(
     process.cwd(),
@@ -365,7 +365,7 @@ function readCmsConfig(): CmsConfig {
  * Resolve a collection name to an `EntryCollection` from the CMS config.
  * Throws descriptive errors if the collection is not found or is not a folder-based collection.
  */
-function resolveCollection(config: CmsConfig, name: string): EntryCollection {
+export function resolveCollection(config: CmsConfig, name: string): EntryCollection {
   const collections = config.collections ?? [];
   const match = collections.find((c) => "name" in c && c.name === name);
 
