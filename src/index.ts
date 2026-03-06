@@ -1,5 +1,7 @@
 import type { AstroIntegration } from "astro";
 import type { CmsConfig } from "@sveltia/cms";
+import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 export type { CmsConfig };
 
@@ -40,14 +42,20 @@ export default function sveltiaCms(options: SveltiaOptions): AstroIntegration {
   return {
     name: "astro-sveltia-cms",
     hooks: {
-      "astro:config:setup": ({ injectRoute, updateConfig, logger }) => {
+      "astro:config:setup": ({ injectRoute, updateConfig, createCodegenDir, logger }) => {
         // Inject the admin page route
         injectRoute({
           pattern: route,
           entrypoint: new URL("./admin.astro", import.meta.url),
         });
 
-        // Register the virtual module plugin
+        // Write the CMS config to a JSON file in .astro/astro-sveltia-cms/
+        // so the content loader can read it without a live Vite server.
+        const codegenDir = createCodegenDir();
+        const configPath = fileURLToPath(new URL("config.json", codegenDir));
+        writeFileSync(configPath, JSON.stringify(config));
+
+        // Register the virtual module plugin (used by admin.astro at runtime)
         updateConfig({
           vite: {
             plugins: [

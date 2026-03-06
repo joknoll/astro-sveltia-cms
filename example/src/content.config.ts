@@ -1,16 +1,11 @@
 import { defineCollection } from "astro:content";
-import { sveltiaLoader } from "astro-sveltia-cms/loader";
-import { postsCollection } from "./src/collections.ts";
 
+import { sveltiaLoader } from "astro-sveltia-cms/loader";
+
+// Collections are defined in astro.config.mjs.
+// Just reference them by name here — schema is auto-generated.
 const posts = defineCollection({
-  loader: sveltiaLoader(postsCollection),
-  // Schema is auto-generated from the Sveltia CMS field definitions:
-  //   z.object({
-  //     title: z.string(),
-  //     date: z.coerce.date(),
-  //     draft: z.boolean().optional(),
-  //   })
-  // The "body" field is excluded (handled by glob loader as document content)
+  loader: sveltiaLoader("posts"),
 });
 
 export const collections = { posts };

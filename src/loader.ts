@@ -1,10 +1,12 @@
-import type { Loader } from "astro/loaders";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type {
   CmsConfig,
   EntryCollection,
   Field,
+  FileCollection,
   SelectFieldValue,
 } from "@sveltia/cms";
 
@@ -17,39 +19,6 @@ const frontmatterFormats = new Set([
   "json-frontmatter",
   undefined, // default format is yaml-frontmatter
 ]);
-
-/**
- * Map of collection file extensions to glob patterns.
- * When a collection doesn't specify an extension, the format determines the default.
- */
-const formatExtensions: Record<string, string> = {
-  yml: "md",
-  yaml: "md",
-  toml: "md",
-  json: "json",
-  "yaml-frontmatter": "md",
-  "toml-frontmatter": "md",
-  "json-frontmatter": "md",
-};
-
-/**
- * Check if a field represents the document body content.
- * Body fields are excluded from the Zod schema because the glob loader
- * handles document body separately.
- */
-function isBodyField(
-  field: Field,
-  collection: EntryCollection,
-): boolean {
-  if (!("widget" in field)) return false;
-  const widget = field.widget;
-  const isFrontmatter = frontmatterFormats.has(collection.format);
-  return (
-    isFrontmatter &&
-    field.name === "body" &&
-    (widget === "markdown" || widget === "richtext")
-  );
-}
 
 /**
  * Check if a field should be optional in the Zod schema.
@@ -379,61 +348,196 @@ export function sveltiaSchema(
 }
 
 /**
- * Create an Astro content collection loader from a Sveltia CMS entry collection definition.
- *
- * This wraps Astro's built-in `glob()` loader and auto-generates a Zod schema
- * from the Sveltia CMS field definitions, providing type-safe content collections
- * that stay in sync with your CMS configuration.
- *
- * @param collection - A Sveltia CMS entry collection definition (must have `folder` and `fields`)
- * @returns An Astro Loader object
- *
- * @example
- * ```ts
- * // src/collections.ts - shared between astro.config.mjs and content.config.ts
- * import type { SveltiaEntryCollection } from 'astro-sveltia-cms/loader';
- *
- * export const postsCollection = {
- *   name: 'posts',
- *   folder: 'src/content/posts',
- *   create: true,
- *   fields: [
- *     { label: 'Title', name: 'title', widget: 'string' },
- *     { label: 'Date', name: 'date', widget: 'datetime' },
- *     { label: 'Body', name: 'body', widget: 'markdown' },
- *   ],
- * } satisfies SveltiaEntryCollection;
- * ```
- *
- * ```ts
- * // src/content.config.ts
- * import { defineCollection } from 'astro:content';
- * import { sveltiaLoader } from 'astro-sveltia-cms/loader';
- * import { postsCollection } from './collections';
- *
- * const posts = defineCollection({
- *   loader: sveltiaLoader(postsCollection),
- * });
- *
- * export const collections = { posts };
- * ```
+ * Read the CMS config from the codegen JSON file written by the integration.
+ * Located at `.astro/integrations/astro-sveltia-cms/config.json` relative to the project root.
  */
-export function sveltiaLoader(collection: EntryCollection): Loader {
+function readCmsConfig(): CmsConfig {
+  // Astro runs with cwd set to the project root
+  const configPath = join(
+    process.cwd(),
+    ".astro",
+    "integrations",
+    "astro-sveltia-cms",
+    "config.json",
+  );
+  try {
+    const raw = readFileSync(configPath, "utf-8");
+    return JSON.parse(raw) as CmsConfig;
+  } catch {
+    throw new Error(
+      `[sveltiaLoader] Could not read CMS config from ${configPath}. ` +
+        `Make sure the astro-sveltia-cms integration is added to your astro.config.mjs.`,
+    );
+  }
+}
+
+/**
+ * Resolve a collection name to an `EntryCollection` from the CMS config.
+ * Throws descriptive errors if the collection is not found or is not a folder-based collection.
+ */
+function resolveCollection(
+  config: CmsConfig,
+  name: string,
+): EntryCollection {
+  const collections = config.collections ?? [];
+  const match = collections.find(
+    (c) => "name" in c && c.name === name,
+  );
+
+  if (!match) {
+    const available = collections
+      .filter((c): c is EntryCollection | FileCollection => "name" in c)
+      .map((c) => c.name);
+    throw new Error(
+      `[sveltiaLoader] Collection "${name}" not found in CMS config. ` +
+        `Available collections: ${available.length > 0 ? available.join(", ") : "(none)"}`,
+    );
+  }
+
+  if (!("folder" in match) || !("fields" in match)) {
+    throw new Error(
+      `[sveltiaLoader] Collection "${name}" is not a folder-based entry collection. ` +
+        `Only entry collections (with "folder" and "fields") are supported by sveltiaLoader.`,
+    );
+  }
+
+  return match as EntryCollection;
+}
+
+/**
+ * Structural type for an Astro content loader.
+ * We define our own instead of re-exporting `Loader` from `astro/loaders`
+ * to avoid type identity mismatches when consumers have a different astro version.
+ *
+ * `load` uses `any` for its context parameter because the actual `LoaderContext`
+ * type from `astro/loaders` contains deep Vite/Rollup types that differ between
+ * astro versions, causing "excessive stack depth" errors. Astro calls `load()`
+ * internally — consumers never construct the context themselves.
+ */
+export interface SveltiaLoader {
+  name: string;
+  load: (context: any) => Promise<void>;
+  schema?: any;
+}
+
+/**
+ * Create a glob-based Loader from a resolved EntryCollection.
+ */
+function loaderFromCollection(collection: EntryCollection): SveltiaLoader {
   const extension = collection.extension || "md";
   const pattern = `**/*.${extension}`;
   const base = collection.folder;
-
   const isFrontmatter = frontmatterFormats.has(collection.format);
 
-  // Use glob loader for file loading
   const inner = glob({ pattern, base });
 
   return {
-    ...inner,
     name: "sveltia-cms",
+    load: (context) => inner.load(context),
     schema: sveltiaSchema(collection.fields, {
       excludeBody: isFrontmatter,
     }),
+  };
+}
+
+/**
+ * Create an Astro content collection loader from a Sveltia CMS collection.
+ *
+ * Accepts either a **collection name** (string) or a full **collection object**.
+ *
+ * **String form** — looks up the collection from the CMS config passed to the
+ * `sveltiaCms()` integration in `astro.config.mjs`. This is the recommended
+ * approach: define your collections once in the Astro config and reference
+ * them by name in `content.config.ts`.
+ *
+ * **Object form** — pass an `EntryCollection` object directly. Useful when
+ * you want to use the loader independently of the integration, or share
+ * collection definitions via a separate module.
+ *
+ * In both cases, the loader wraps Astro's built-in `glob()` loader and
+ * auto-generates a Zod schema from the Sveltia CMS field definitions.
+ *
+ * @example String form (recommended)
+ * ```ts
+ * // astro.config.mjs — single source of truth
+ * import { defineConfig } from 'astro/config';
+ * import sveltiaCms from 'astro-sveltia-cms';
+ *
+ * export default defineConfig({
+ *   integrations: [
+ *     sveltiaCms({
+ *       config: {
+ *         backend: { name: 'github', repo: 'user/repo', branch: 'main' },
+ *         collections: [
+ *           {
+ *             name: 'posts',
+ *             folder: 'src/content/posts',
+ *             create: true,
+ *             fields: [
+ *               { label: 'Title', name: 'title', widget: 'string' },
+ *               { label: 'Date', name: 'date', widget: 'datetime' },
+ *               { label: 'Body', name: 'body', widget: 'markdown' },
+ *             ],
+ *           },
+ *         ],
+ *       },
+ *     }),
+ *   ],
+ * });
+ * ```
+ *
+ * ```ts
+ * // content.config.ts — just reference by name
+ * import { defineCollection } from 'astro:content';
+ * import { sveltiaLoader } from 'astro-sveltia-cms/loader';
+ *
+ * export const collections = {
+ *   posts: defineCollection({ loader: sveltiaLoader('posts') }),
+ * };
+ * ```
+ *
+ * @example Object form
+ * ```ts
+ * // content.config.ts
+ * import { defineCollection } from 'astro:content';
+ * import { sveltiaLoader } from 'astro-sveltia-cms/loader';
+ * import type { SveltiaEntryCollection } from 'astro-sveltia-cms/loader';
+ *
+ * const postsCollection = { ... } satisfies SveltiaEntryCollection;
+ *
+ * export const collections = {
+ *   posts: defineCollection({ loader: sveltiaLoader(postsCollection) }),
+ * };
+ * ```
+ */
+export function sveltiaLoader(collectionOrName: string | EntryCollection): SveltiaLoader {
+  // Object form: collection passed directly — resolve synchronously
+  if (typeof collectionOrName !== "string") {
+    return loaderFromCollection(collectionOrName);
+  }
+
+  // String form: look up collection from CMS config written by the integration.
+  // The integration writes config.json to .astro/integrations/astro-sveltia-cms/
+  // during astro:config:setup, which runs before content config is loaded.
+  const name = collectionOrName;
+
+  return {
+    name: "sveltia-cms",
+
+    schema: () => {
+      const config = readCmsConfig();
+      const collection = resolveCollection(config, name);
+      const isFrontmatter = frontmatterFormats.has(collection.format);
+      return sveltiaSchema(collection.fields, { excludeBody: isFrontmatter });
+    },
+
+    load: async (context) => {
+      const config = readCmsConfig();
+      const collection = resolveCollection(config, name);
+      const extension = collection.extension || "md";
+      const inner = glob({ pattern: `**/*.${extension}`, base: collection.folder });
+      return inner.load(context);
+    },
   };
 }
 

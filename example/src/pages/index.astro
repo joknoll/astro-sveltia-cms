@@ -1,4 +1,8 @@
 ---
+import { getCollection } from "astro:content"
+
+
+const posts = await getCollection("posts");
 
 ---
 
@@ -12,7 +16,21 @@
 		<title>Astro</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
-		<a href="/cms">Sveltia CMS</a>
+		<h1>Astro with SveltiaCMS</h1>
+		<a href="/cms">Go to CMS</a>
+
+		<section>
+			<h2>Blog Posts</h2>
+			<ul>
+				{
+					posts.map(({ data: post }) => (
+						<li>
+							{post.title}
+						</li>
+					))
+				}
+			</ul>
+		</section>
+
 	</body>
 </html>
