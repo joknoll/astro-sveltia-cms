@@ -3,6 +3,12 @@ import type { CmsConfig } from "@sveltia/cms";
 
 export type { CmsConfig };
 
+/**
+ * The full Sveltia CMS configuration object.
+ * Alias for `CmsConfig` from `@sveltia/cms`.
+ */
+export type SveltiaConfig = CmsConfig;
+
 export type SveltiaOptions = {
   /**
    * The route where the CMS will be served.

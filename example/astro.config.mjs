@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import sveltia from "astro-sveltia-cms";
+import { postsCollection } from "./src/collections.ts";
 
 // https://astro.build/config
 export default defineConfig({
@@ -14,18 +15,7 @@ export default defineConfig({
         },
         media_folder: "public/media",
 
-        collections: [
-          {
-            name: "posts",
-            label: "Posts",
-            folder: "src/content/posts",
-            create: true,
-            fields: [
-              { label: "Title", name: "title", widget: "string" },
-              { label: "Body", name: "body", widget: "markdown" },
-            ],
-          },
-        ],
+        collections: [postsCollection],
       },
     }),
   ],
