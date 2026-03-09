@@ -49,17 +49,17 @@ export default defineConfig({
 });
 ```
 
-**`src/content/config.ts`** - use the content loader:
+**`src/content.config.ts`** - use the content loader:
 
 ```ts
 import { defineCollection } from "astro:content";
 import { sveltiaLoader } from "@joknoll/astro-sveltia-cms/loader";
 
-export const collections = {
-  posts: defineCollection({
-    loader: sveltiaLoader("posts"),
-  }),
-};
+const posts = defineCollection({
+  loader: sveltiaLoader("posts"),
+});
+
+export const collections = { posts };
 ```
 
 **`src/pages/blog/[slug].astro`** - query the collection:
