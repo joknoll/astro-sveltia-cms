@@ -132,7 +132,7 @@ describe("sveltiaLoader — object form", () => {
       ],
     };
     const loader = sveltiaLoader(col);
-    const schema = loader.schema as { shape: Record<string, unknown> };
+    const schema = loader.schema as unknown as { shape: Record<string, unknown> };
     expect(schema.shape).not.toHaveProperty("body");
     expect(schema.shape).toHaveProperty("title");
   });
@@ -148,7 +148,7 @@ describe("sveltiaLoader — object form", () => {
       ],
     };
     const loader = sveltiaLoader(col);
-    const schema = loader.schema as { shape: Record<string, unknown> };
+    const schema = loader.schema as unknown as { shape: Record<string, unknown> };
     expect(schema.shape).toHaveProperty("body");
     expect(schema.shape).toHaveProperty("name");
   });

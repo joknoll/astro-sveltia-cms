@@ -11,9 +11,7 @@ export const prerender = true;
   </head>
   <body>
     <script>
-      // @ts-expect-error — @sveltia/cms does not ship types compatible with all tsconfigs
       import { init } from "@sveltia/cms";
-      // @ts-expect-error — virtual module resolved at runtime by the Vite plugin
       import { config, title } from "virtual:astro-sveltia-cms/config";
 
       if (title !== undefined) {
