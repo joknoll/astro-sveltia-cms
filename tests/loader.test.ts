@@ -113,21 +113,20 @@ describe("sveltiaLoader — object form", () => {
     expect(typeof loader.load).toBe("function");
   });
 
-  it("returns a loader with a schema (Zod object)", () => {
+  it("has a createSchema function", () => {
     const loader = sveltiaLoader(collection);
-    expect(loader.schema).toBeDefined();
+    expect(typeof loader.createSchema).toBe("function");
   });
 
-  it("schema validates data matching the fields", () => {
+  it("createSchema() returns a schema that validates data matching the fields", async () => {
     const loader = sveltiaLoader(collection);
-    const schema = loader.schema as {
-      safeParse: (v: unknown) => { success: boolean };
-    };
-    expect(schema.safeParse({ title: "Hello", date: "2024-01-01" }).success).toBe(true);
-    expect(schema.safeParse({ date: "2024-01-01" }).success).toBe(false); // missing title
+    const { schema } = await loader.createSchema!();
+    const s = schema as { safeParse: (v: unknown) => { success: boolean } };
+    expect(s.safeParse({ title: "Hello", date: "2024-01-01" }).success).toBe(true);
+    expect(s.safeParse({ date: "2024-01-01" }).success).toBe(false); // missing title
   });
 
-  it("schema excludes body by default (frontmatter format)", () => {
+  it("createSchema() excludes body by default (frontmatter format)", async () => {
     const col: EntryCollection = {
       name: "posts",
       folder: "src/content/posts",
@@ -137,14 +136,13 @@ describe("sveltiaLoader — object form", () => {
       ],
     };
     const loader = sveltiaLoader(col);
-    const schema = loader.schema as unknown as {
-      shape: Record<string, unknown>;
-    };
-    expect(schema.shape).not.toHaveProperty("body");
-    expect(schema.shape).toHaveProperty("title");
+    const { schema } = await loader.createSchema!();
+    const s = schema as unknown as { shape: Record<string, unknown> };
+    expect(s.shape).not.toHaveProperty("body");
+    expect(s.shape).toHaveProperty("title");
   });
 
-  it("schema includes body when format is not frontmatter", () => {
+  it("createSchema() includes body when format is not frontmatter", async () => {
     const col: EntryCollection = {
       name: "data",
       folder: "src/data",
@@ -155,11 +153,10 @@ describe("sveltiaLoader — object form", () => {
       ],
     };
     const loader = sveltiaLoader(col);
-    const schema = loader.schema as unknown as {
-      shape: Record<string, unknown>;
-    };
-    expect(schema.shape).toHaveProperty("body");
-    expect(schema.shape).toHaveProperty("name");
+    const { schema } = await loader.createSchema!();
+    const s = schema as unknown as { shape: Record<string, unknown> };
+    expect(s.shape).toHaveProperty("body");
+    expect(s.shape).toHaveProperty("name");
   });
 
   it("uses default extension 'md' when extension is not specified", () => {
@@ -184,16 +181,14 @@ describe("sveltiaLoader — string form", () => {
     expect(typeof loader.load).toBe("function");
   });
 
-  it("has a schema property (lazy function or object)", () => {
+  it("has a createSchema function", () => {
     const loader = sveltiaLoader("posts");
-    expect(loader.schema).toBeDefined();
+    expect(typeof loader.createSchema).toBe("function");
   });
 
-  it("schema() throws when config file is missing (no integration setup)", () => {
+  it("createSchema() throws when config file is missing (no integration setup)", async () => {
     const loader = sveltiaLoader("posts");
-    if (typeof loader.schema === "function") {
-      expect(() => (loader.schema as () => unknown)()).toThrowError(/Could not read CMS config/);
-    }
+    await expect(loader.createSchema!()).rejects.toThrowError(/Could not read CMS config/);
   });
 
   it("load() throws when config file is missing (no integration setup)", async () => {
