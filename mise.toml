@@ -24,6 +24,11 @@ run = ["rm -rf node_modules dist example/node_modules", "rm bun.lock example/bun
 description = "Setup project"
 run = ["bun i", "bun run build", "cd example && bun i"]
 
+[tasks.play]
+description = "Run playground"
+run = ["cd example && bun run dev"]
+raw = true
+
 [tasks."release:version"]
 description = "Bump package version and create a git tag."
 usage = '''
