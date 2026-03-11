@@ -16,7 +16,8 @@ export default defineConfig({
           branch: "main",
         },
 
-        media_folder: "public/media",
+        media_folder: "/src/assets/media",
+        public_folder: "@/assets/media",
 
         collections: [
           {
@@ -34,6 +35,12 @@ export default defineConfig({
                 label: "Draft",
                 name: "draft",
                 widget: "boolean",
+                required: false,
+              },
+              {
+                label: "Cover Image",
+                name: "cover",
+                widget: "image",
                 required: false,
               },
               { label: "Body", name: "body", widget: "markdown" },

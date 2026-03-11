@@ -1,38 +1,33 @@
 ---
-import { getCollection } from "astro:content"
-
+import { getCollection } from "astro:content";
 
 const posts = await getCollection("posts");
-
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro with SveltiaCMS</h1>
-		<a href="/cms">Go to CMS</a>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Astro</title>
+    </head>
+    <body>
+        <h1>Astro with SveltiaCMS</h1>
+        <a href="/cms">Go to CMS</a>
 
-		<section>
-			<h2>Blog Posts</h2>
-			<ul>
-				{
-					posts.map(({ id, data: post }) => (
-						<li>
-							<a href={`/blog/${id}`}>
-								{post.title}
-							</a>
-						</li>
-					))
-				}
-			</ul>
-		</section>
-
-	</body>
+        <section>
+            <h2>Blog Posts</h2>
+            <ul>
+                {
+                    posts.map(({ id, data: post }) => (
+                        <li>
+                            <a href={`/blog/${id}`}>{post.title}</a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </section>
+    </body>
 </html>

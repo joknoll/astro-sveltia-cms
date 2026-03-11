@@ -1,6 +1,7 @@
 ---
 title: "Building a Blog with Astro and Sveltia CMS"
 date: 2025-03-15T09:00:00.000Z
+cover: ../../assets/image.webp
 category: tutorial
 readTime: 8
 tags:

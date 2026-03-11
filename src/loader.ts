@@ -1,10 +1,10 @@
 import { glob } from "astro/loaders";
-import type { Loader } from "astro/loaders";
-import { z } from "astro/zod";
+import type { Loader, LoaderContext } from "astro/loaders";
 import type { CmsConfig, EntryCollection, Field } from "@sveltia/cms";
-import { createAuxiliaryTypeStore, createTypeAlias, printNode, zodToTs } from "zod-to-ts";
 import { readCmsConfig, resolveCollection } from "./config.js";
-import { frontmatterFormats, sveltiaSchema } from "./schema.js";
+import { frontmatterFormats } from "./schema.js";
+import { prefixImageFields } from "./images.js";
+import { buildCollectionSchema } from "./type-gen.js";
 
 export { readCmsConfig, resolveCollection } from "./config.js";
 export {
@@ -34,42 +34,40 @@ function getCachedCollection(name: string): EntryCollection {
   return collection;
 }
 
-async function buildSchema(
-  collection: EntryCollection,
-): Promise<{ schema: z.ZodType; types: string }> {
-  const schema = sveltiaSchema(collection.fields, {
-    excludeBody: frontmatterFormats.has(collection.format),
-  });
-  const auxiliaryTypeStore = createAuxiliaryTypeStore();
-  const { node } = zodToTs(schema, {
-    auxiliaryTypeStore,
-    unrepresentable: "any",
-  });
-  const typeAlias = createTypeAlias(node, "Entry");
-  return { schema, types: `export ${printNode(typeAlias)}` };
-}
-
-function loaderFromCollection(collection: EntryCollection): Loader {
-  const extension = collection.extension ?? "md";
-  const inner = glob({ pattern: `**/*.${extension}`, base: collection.folder });
-
+function wrapContextForImages(context: LoaderContext, collection: EntryCollection): LoaderContext {
+  const excludeBody = frontmatterFormats.has(collection.format);
   return {
-    name: "sveltia-cms",
-    load: (context) => inner.load(context),
-    createSchema: () => buildSchema(collection),
-  } satisfies Loader;
+    ...context,
+    parseData: <TData extends Record<string, unknown>>(opts: {
+      id: string;
+      data: TData;
+      filePath?: string;
+    }) => {
+      const transformed = prefixImageFields(
+        opts.data as Record<string, unknown>,
+        collection.fields,
+        excludeBody,
+      );
+      return context.parseData({ ...opts, data: transformed as TData });
+    },
+  };
 }
 
 export function sveltiaLoader(collectionOrName: string | EntryCollection): Loader {
-  if (typeof collectionOrName !== "string") {
-    return loaderFromCollection(collectionOrName);
-  }
-
-  const name = collectionOrName;
+  const getCollection =
+    typeof collectionOrName === "string"
+      ? () => getCachedCollection(collectionOrName)
+      : () => collectionOrName;
 
   return {
     name: "sveltia-cms",
-    createSchema: async () => buildSchema(getCachedCollection(name)),
-    load: async (context) => loaderFromCollection(getCachedCollection(name)).load(context),
+    createSchema: async () => buildCollectionSchema(getCollection()),
+    load: async (context) => {
+      const collection = getCollection();
+      const extension = collection.extension ?? "md";
+      return glob({ pattern: `**/*.${extension}`, base: collection.folder }).load(
+        wrapContextForImages(context, collection),
+      );
+    },
   } satisfies Loader;
 }

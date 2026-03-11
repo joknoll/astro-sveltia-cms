@@ -1,5 +1,22 @@
 import { z } from "astro/zod";
 import type { Field, SelectFieldValue } from "@sveltia/cms";
+import type { ImageFunction } from "astro/content/config";
+import {
+  isBodyField,
+  type NumberField,
+  type MultipleField,
+  type SelectField,
+  type CodeField,
+  type HiddenField,
+  type ObjectField,
+  type ListField,
+  type VariantType,
+} from "./field-types.js";
+
+export type SchemaContext = {
+  image?: ImageFunction;
+  imageSchemas: z.ZodType[];
+};
 
 /**
  * File formats that store the document body separately from frontmatter.
@@ -12,54 +29,16 @@ export const frontmatterFormats = new Set([
   undefined,
 ]);
 
-// Narrow helper interfaces — used to safely access widget-specific properties
-// without scattering `as` casts throughout the code.
-
-interface NumberField {
-  value_type?: string;
-}
-
-interface MultipleField {
-  multiple?: boolean;
-}
-
-interface SelectField extends MultipleField {
-  options: SelectFieldValue[] | { label: string; value: SelectFieldValue }[];
-}
-
-interface CodeField {
-  output_code_only?: boolean;
-  keys?: { code: string; lang: string };
-}
-
-interface HiddenField {
-  default?: unknown;
-}
-
-interface ObjectField {
-  fields?: Field[];
-  types?: VariantType[];
-  typeKey?: string;
-}
-
-interface ListField {
-  field?: Field;
-  fields?: Field[];
-  types?: VariantType[];
-  typeKey?: string;
-}
-
-interface VariantType {
-  name: string;
-  fields?: Field[];
-}
-
 export function isOptionalField(field: Field): boolean {
   if (!("required" in field)) return false;
   // `required` can be boolean or LocaleCode[].
   // An empty locale array means "required in no locale", which is treated as optional.
   if (Array.isArray(field.required)) return field.required.length === 0;
   return field.required === false;
+}
+
+function applyOptional(schema: z.ZodType, field: Field): z.ZodType {
+  return isOptionalField(field) ? schema.optional() : schema;
 }
 
 export function getSelectValues(
@@ -94,22 +73,19 @@ export function selectValuesToZod(values: SelectFieldValue[]): z.ZodType {
 
 type ZodObjectShape = z.ZodObject<Record<string, z.ZodType>>;
 
-function buildVariantSchemas(variants: VariantType[], typeKey: string): ZodObjectShape[] {
-  return variants.map((variant) => {
-    const shape: Record<string, z.ZodType> = {
-      [typeKey]: z.literal(variant.name),
-    };
+function variantsToDiscriminatedUnion(
+  variants: VariantType[],
+  typeKey: string,
+  ctx?: SchemaContext,
+): z.ZodType {
+  if (variants.length === 0) return z.object({});
+  const schemas = variants.map((variant) => {
+    const shape: Record<string, z.ZodType> = { [typeKey]: z.literal(variant.name) };
     for (const subField of variant.fields ?? []) {
-      const subSchema = fieldToZod(subField);
-      shape[subField.name] = isOptionalField(subField) ? subSchema.optional() : subSchema;
+      shape[subField.name] = applyOptional(fieldToZod(subField, ctx), subField);
     }
     return z.object(shape);
   });
-}
-
-function variantsToDiscriminatedUnion(variants: VariantType[], typeKey: string): z.ZodType {
-  const schemas = buildVariantSchemas(variants, typeKey);
-  if (schemas.length === 0) return z.object({});
   if (schemas.length === 1) return schemas[0];
   return z.discriminatedUnion(typeKey, schemas as [ZodObjectShape, ...ZodObjectShape[]]);
 }
@@ -120,6 +96,16 @@ function numberFieldToZod(field: Field): z.ZodType {
     return z.union([z.number(), z.string()]);
   }
   return z.number();
+}
+
+function imageFieldToZod(field: Field, ctx?: SchemaContext): z.ZodType {
+  const isMultiple = (field as MultipleField).multiple;
+  if (ctx?.image) {
+    return isMultiple ? z.array(ctx.image()) : ctx.image();
+  }
+  const inner = z.string();
+  if (ctx) ctx.imageSchemas.push(inner);
+  return isMultiple ? z.array(inner) : inner;
 }
 
 function fileFieldToZod(field: Field): z.ZodType {
@@ -159,18 +145,17 @@ function hiddenFieldToZod(field: Field): z.ZodType {
   }
 }
 
-function objectFieldToZod(field: Field): z.ZodType {
+function objectFieldToZod(field: Field, ctx?: SchemaContext): z.ZodType {
   const { fields, types, typeKey = "type" } = field as ObjectField;
 
   if (types) {
-    return variantsToDiscriminatedUnion(types, typeKey);
+    return variantsToDiscriminatedUnion(types, typeKey, ctx);
   }
 
   if (fields) {
     const shape: Record<string, z.ZodType> = {};
     for (const subField of fields) {
-      const subSchema = fieldToZod(subField);
-      shape[subField.name] = isOptionalField(subField) ? subSchema.optional() : subSchema;
+      shape[subField.name] = applyOptional(fieldToZod(subField, ctx), subField);
     }
     return z.object(shape);
   }
@@ -178,31 +163,30 @@ function objectFieldToZod(field: Field): z.ZodType {
   return z.object({});
 }
 
-function listFieldToZod(field: Field): z.ZodType {
+function listFieldToZod(field: Field, ctx?: SchemaContext): z.ZodType {
   const { field: singleField, fields, types, typeKey = "type" } = field as ListField;
 
   if (types) {
     if (types.length === 0) return z.array(z.any());
-    return z.array(variantsToDiscriminatedUnion(types, typeKey));
+    return z.array(variantsToDiscriminatedUnion(types, typeKey, ctx));
   }
 
   if (fields) {
     const shape: Record<string, z.ZodType> = {};
     for (const subField of fields) {
-      const subSchema = fieldToZod(subField);
-      shape[subField.name] = isOptionalField(subField) ? subSchema.optional() : subSchema;
+      shape[subField.name] = applyOptional(fieldToZod(subField, ctx), subField);
     }
     return z.array(z.object(shape));
   }
 
   if (singleField) {
-    return z.array(fieldToZod(singleField));
+    return z.array(fieldToZod(singleField, ctx));
   }
 
   return z.array(z.string());
 }
 
-export function fieldToZod(field: Field): z.ZodType {
+export function fieldToZod(field: Field, ctx?: SchemaContext): z.ZodType {
   const widget = "widget" in field ? field.widget : "string";
 
   switch (widget) {
@@ -226,6 +210,8 @@ export function fieldToZod(field: Field): z.ZodType {
       return z.coerce.date();
 
     case "image":
+      return imageFieldToZod(field, ctx);
+
     case "file":
       return fileFieldToZod(field);
 
@@ -245,10 +231,10 @@ export function fieldToZod(field: Field): z.ZodType {
       return hiddenFieldToZod(field);
 
     case "object":
-      return objectFieldToZod(field);
+      return objectFieldToZod(field, ctx);
 
     case "list":
-      return listFieldToZod(field);
+      return listFieldToZod(field, ctx);
 
     default:
       return z.any();
@@ -257,22 +243,19 @@ export function fieldToZod(field: Field): z.ZodType {
 
 export function sveltiaSchema(
   fields: Field[],
-  options?: { excludeBody?: boolean },
+  {
+    excludeBody = true,
+    ctx,
+  }: {
+    excludeBody?: boolean;
+    ctx?: SchemaContext;
+  } = {},
 ): z.ZodObject<Record<string, z.ZodType>> {
-  const excludeBody = options?.excludeBody ?? true;
   const shape: Record<string, z.ZodType> = {};
 
   for (const field of fields) {
-    const isBodyField =
-      excludeBody &&
-      field.name === "body" &&
-      "widget" in field &&
-      (field.widget === "markdown" || field.widget === "richtext");
-
-    if (isBodyField) continue;
-
-    const schema = fieldToZod(field);
-    shape[field.name] = isOptionalField(field) ? schema.optional() : schema;
+    if (excludeBody && isBodyField(field)) continue;
+    shape[field.name] = applyOptional(fieldToZod(field, ctx), field);
   }
 
   return z.object(shape);
