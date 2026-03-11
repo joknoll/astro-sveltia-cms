@@ -1,6 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import sveltia from "astro-sveltiacms";
+import sveltia from "astro-loader-sveltia-cms";
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,6 +24,9 @@ export default defineConfig({
             label: "Posts",
             folder: "src/content/posts",
             create: true,
+            sortable_fields: ["title", "pubDate"],
+            preview_path: "/blog/{{slug}}/",
+            preview_path_date_field: "pubDate",
             fields: [
               { label: "Title", name: "title", widget: "string" },
               { label: "Date", name: "date", widget: "datetime" },

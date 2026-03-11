@@ -1,7 +1,10 @@
 {
-  "name": "",
-  "version": "0.0.1",
+  "name": "example",
   "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -9,10 +12,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.6",
-    "@sveltia/cms": "^0.140.4",
-    "astro": "^5.17.1",
-    "astro-sveltiacms": "file:..",
-    "typescript": "^5.9.3"
+    "astro": "^6.0.2",
+    "astro-loader-sveltia-cms": "file:.."
   }
 }

@@ -9,8 +9,8 @@ tags:
   - tutorial
   - typescript
 relatedLinks:
-  - label: astro-sveltiacms on GitHub
-    url: https://github.com/joknoll/astro-sveltiacms
+  - label: astro-loader-sveltia-cms on GitHub
+    url: https://github.com/joknoll/astro-loader-sveltia-cms
 seo:
   metaTitle: Build a Blog with Astro + Sveltia CMS
   metaDescription: Step-by-step guide to wiring up Sveltia CMS as your headless backend, auto-generating Zod schemas, and querying content collections.
