@@ -20,7 +20,7 @@ export interface SveltiaLoader {
   name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   load: (context: any) => Promise<void>;
-  schema?: z.ZodTypeAny | (() => z.ZodTypeAny);
+  schema?: z.ZodType | (() => z.ZodType);
 }
 
 export type SveltiaEntryCollection = EntryCollection;
@@ -32,7 +32,11 @@ export type SveltiaConfig = CmsConfig;
  * The default format (undefined) is yaml-frontmatter, so undefined is treated
  * as a frontmatter format.
  */
-const FRONTMATTER_FORMATS = new Set(["yaml-frontmatter", "toml-frontmatter", "json-frontmatter"]);
+const FRONTMATTER_FORMATS = new Set([
+  "yaml-frontmatter",
+  "toml-frontmatter",
+  "json-frontmatter",
+]);
 
 function isFrontmatterFormat(format: string | undefined): boolean {
   return !format || FRONTMATTER_FORMATS.has(format);
@@ -63,7 +67,9 @@ function getCachedCollection(name: string): EntryCollection {
   return collection;
 }
 
-export function sveltiaLoader(collectionOrName: string | EntryCollection): SveltiaLoader {
+export function sveltiaLoader(
+  collectionOrName: string | EntryCollection,
+): SveltiaLoader {
   if (typeof collectionOrName !== "string") {
     return loaderFromCollection(collectionOrName);
   }
@@ -83,7 +89,10 @@ export function sveltiaLoader(collectionOrName: string | EntryCollection): Svelt
     load: async (context) => {
       const collection = getCachedCollection(name);
       const extension = collection.extension ?? "md";
-      const inner = glob({ pattern: `**/*.${extension}`, base: collection.folder });
+      const inner = glob({
+        pattern: `**/*.${extension}`,
+        base: collection.folder,
+      });
       return inner.load(context);
     },
   };

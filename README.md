@@ -1,6 +1,6 @@
-# @joknoll/astro-sveltia-cms
+# astro-sveltiacms
 
-Sveltia CMS integration for Astro.
+Sveltia CMS integration for Astro 6.
 Serves the [Sveltia CMS](https://sveltiacms.app) admin UI
 and provides a content loader for Astro's content collections,
 including automatic Zod schema generation derived fromt the CMS field definitions.
@@ -8,18 +8,18 @@ including automatic Zod schema generation derived fromt the CMS field definition
 ## Installation
 
 ```bash
-npm install @joknoll/astro-sveltia-cms
+npm install astro-sveltiacms
 # or
-bun add @joknoll/astro-sveltia-cms
+bun add astro-sveltiacms
 ```
 
 ## Quick Start
 
-**`astro.config.mjs`** — register the integration:
+Register the integration in **`astro.config.mjs`**:
 
 ```js
 import { defineConfig } from "astro/config";
-import sveltia from "@joknoll/astro-sveltia-cms";
+import sveltia from "astro-sveltiacms";
 
 export default defineConfig({
   integrations: [
@@ -49,11 +49,11 @@ export default defineConfig({
 });
 ```
 
-**`src/content.config.ts`** - use the content loader:
+Use the content loader in **`src/content.config.ts`**:
 
 ```ts
 import { defineCollection } from "astro:content";
-import { sveltiaLoader } from "@joknoll/astro-sveltia-cms/loader";
+import { sveltiaLoader } from "astro-sveltiacms/loader";
 
 const posts = defineCollection({
   loader: sveltiaLoader("posts"),
@@ -62,7 +62,7 @@ const posts = defineCollection({
 export const collections = { posts };
 ```
 
-**`src/pages/blog/[slug].astro`** - query the collection:
+Query the collection on your pages:
 
 ```astro
 ---
@@ -84,6 +84,8 @@ const { Content } = await render(post);
 <Content />
 ```
 
+You can also clone this repository and use it as a starting point for your own project, look into the `example` directory.
+
 ---
 
 ## Integration Options
@@ -96,14 +98,14 @@ sveltia({
 })
 ```
 
-The `config` object is passed directly to `CMS.init()`.
-`load_config_file` is automatically set to `false` since the config is provided programmatically.
-
 ---
 
 ## Backend Configuration
 
 The `config.backend` property determines where your content is stored. Sveltia CMS supports various Git-based backends and a local development backend.
+
+For all backend options including local development and authentication, see the
+[Sveltia CMS Backend Documentation](https://sveltiacms.app/en/docs/backends).
 
 ### GitHub
 
@@ -125,6 +127,3 @@ backend: {
   api_root: "https://codeberg.org/api/v1",
 }
 ```
-
-For all backend options including local development and authentication, see the
-[Sveltia CMS Backend Documentation](https://sveltiacms.app/en/docs/backends).

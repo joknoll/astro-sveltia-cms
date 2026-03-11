@@ -1,23 +1,24 @@
 ---
 export const prerender = true;
 ---
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <title>Content Management</title>
-  </head>
-  <body>
-    <script>
-      import { init } from "@sveltia/cms";
-      import { config, title } from "virtual:astro-sveltia-cms/config";
 
-      if (title !== undefined) {
-        document.title = title;
-      }
-      init({ config });
-    </script>
-  </body>
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="noindex" />
+        <title>Content Management</title>
+    </head>
+    <body>
+        <script>
+            import { init } from "@sveltia/cms";
+            import { config, title } from "virtual:astro-sveltiacms/config";
+
+            if (title !== undefined) {
+                document.title = title;
+            }
+            init({ config });
+        </script>
+    </body>
 </html>

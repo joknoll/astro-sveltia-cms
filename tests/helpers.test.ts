@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { z } from "astro/zod";
-import { getSelectValues, isOptionalField, selectValuesToZod } from "../src/loader.ts";
+import {
+  getSelectValues,
+  isOptionalField,
+  selectValuesToZod,
+} from "../src/loader.ts";
 import type { Field } from "@sveltia/cms";
 
 describe("isOptionalField", () => {
@@ -27,7 +31,11 @@ describe("isOptionalField", () => {
 
   it("returns false when required is an array of locale codes", () => {
     // required can be boolean | LocaleCode[] — an array is truthy, not === false
-    const field = { name: "x", widget: "string", required: ["en", "fr"] } as unknown as Field;
+    const field = {
+      name: "x",
+      widget: "string",
+      required: ["en", "fr"],
+    } as unknown as Field;
     expect(isOptionalField(field)).toBe(false);
   });
 });
@@ -125,8 +133,8 @@ describe("selectValuesToZod", () => {
     expect(schema.safeParse(null).success).toBe(true);
   });
 
-  it("is assignable to ZodTypeAny", () => {
-    const schema: z.ZodTypeAny = selectValuesToZod(["x"]);
+  it("is assignable to ZodType", () => {
+    const schema: z.ZodType = selectValuesToZod(["x"]);
     expect(schema).toBeDefined();
   });
 });

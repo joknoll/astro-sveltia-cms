@@ -3,7 +3,7 @@ import { z } from "astro/zod";
 import { fieldToZod } from "../src/loader.ts";
 import type { Field } from "@sveltia/cms";
 
-function accepts(schema: z.ZodTypeAny, value: unknown): void {
+function accepts(schema: z.ZodType, value: unknown): void {
   const result = schema.safeParse(value);
   if (!result.success) {
     throw new Error(
@@ -12,10 +12,12 @@ function accepts(schema: z.ZodTypeAny, value: unknown): void {
   }
 }
 
-function rejects(schema: z.ZodTypeAny, value: unknown): void {
+function rejects(schema: z.ZodType, value: unknown): void {
   const result = schema.safeParse(value);
   if (result.success) {
-    throw new Error(`Expected schema to reject ${JSON.stringify(value)}, but it was accepted`);
+    throw new Error(
+      `Expected schema to reject ${JSON.stringify(value)}, but it was accepted`,
+    );
   }
 }
 
@@ -60,7 +62,10 @@ describe('fieldToZod — widget: "map"', () => {
 
 describe('fieldToZod — widget: "uuid"', () => {
   it("accepts a uuid string", () => {
-    accepts(fieldToZod({ name: "id", widget: "uuid" }), "123e4567-e89b-12d3-a456-426614174000");
+    accepts(
+      fieldToZod({ name: "id", widget: "uuid" }),
+      "123e4567-e89b-12d3-a456-426614174000",
+    );
   });
   it("rejects a number", () => {
     rejects(fieldToZod({ name: "id", widget: "uuid" }), 123);
@@ -69,16 +74,25 @@ describe('fieldToZod — widget: "uuid"', () => {
 
 describe('fieldToZod — widget: "compute"', () => {
   it("accepts a string", () => {
-    accepts(fieldToZod({ name: "slug", widget: "compute", value: "{{title}}" }), "my-post");
+    accepts(
+      fieldToZod({ name: "slug", widget: "compute", value: "{{title}}" }),
+      "my-post",
+    );
   });
   it("rejects an array", () => {
-    rejects(fieldToZod({ name: "slug", widget: "compute", value: "{{title}}" }), ["a"]);
+    rejects(
+      fieldToZod({ name: "slug", widget: "compute", value: "{{title}}" }),
+      ["a"],
+    );
   });
 });
 
 describe('fieldToZod — widget: "markdown"', () => {
   it("accepts a markdown string", () => {
-    accepts(fieldToZod({ name: "content", widget: "markdown" }), "# Hello\nWorld");
+    accepts(
+      fieldToZod({ name: "content", widget: "markdown" }),
+      "# Hello\nWorld",
+    );
   });
   it("rejects a number", () => {
     rejects(fieldToZod({ name: "content", widget: "markdown" }), 99);
@@ -127,7 +141,11 @@ describe('fieldToZod — widget: "number"', () => {
   });
 
   it('value_type: "int/string" → z.union([z.number(), z.string()])', () => {
-    const s = fieldToZod({ name: "n", widget: "number", value_type: "int/string" });
+    const s = fieldToZod({
+      name: "n",
+      widget: "number",
+      value_type: "int/string",
+    });
     accepts(s, 42);
     accepts(s, "42");
     rejects(s, true);
@@ -135,7 +153,11 @@ describe('fieldToZod — widget: "number"', () => {
   });
 
   it('value_type: "float/string" → z.union([z.number(), z.string()])', () => {
-    const s = fieldToZod({ name: "n", widget: "number", value_type: "float/string" });
+    const s = fieldToZod({
+      name: "n",
+      widget: "number",
+      value_type: "float/string",
+    });
     accepts(s, 1.5);
     accepts(s, "1.5");
     rejects(s, false);
@@ -192,11 +214,17 @@ describe('fieldToZod — widget: "image"', () => {
     accepts(s, []);
   });
   it("rejects a string when multiple: true", () => {
-    rejects(fieldToZod({ name: "img", widget: "image", multiple: true }), "/a.jpg");
+    rejects(
+      fieldToZod({ name: "img", widget: "image", multiple: true }),
+      "/a.jpg",
+    );
   });
 
   it("accepts a single string when multiple: false (explicit)", () => {
-    accepts(fieldToZod({ name: "img", widget: "image", multiple: false }), "/a.jpg");
+    accepts(
+      fieldToZod({ name: "img", widget: "image", multiple: false }),
+      "/a.jpg",
+    );
   });
 });
 
@@ -215,7 +243,11 @@ describe('fieldToZod — widget: "file"', () => {
 
 describe('fieldToZod — widget: "select"', () => {
   it("string options → z.enum()", () => {
-    const s = fieldToZod({ name: "s", widget: "select", options: ["a", "b", "c"] });
+    const s = fieldToZod({
+      name: "s",
+      widget: "select",
+      options: ["a", "b", "c"],
+    });
     accepts(s, "a");
     accepts(s, "c");
     rejects(s, "d");
@@ -280,7 +312,11 @@ describe('fieldToZod — widget: "select"', () => {
   });
 
   it("mixed string/number/null options → z.union of literals", () => {
-    const s = fieldToZod({ name: "s", widget: "select", options: ["yes", 0, null] });
+    const s = fieldToZod({
+      name: "s",
+      widget: "select",
+      options: ["yes", 0, null],
+    });
     accepts(s, "yes");
     accepts(s, 0);
     accepts(s, null);
@@ -311,7 +347,11 @@ describe('fieldToZod — widget: "select"', () => {
 
 describe('fieldToZod — widget: "relation"', () => {
   it("single → z.string()", () => {
-    const s = fieldToZod({ name: "r", widget: "relation", collection: "authors" });
+    const s = fieldToZod({
+      name: "r",
+      widget: "relation",
+      collection: "authors",
+    });
     accepts(s, "some-slug");
     rejects(s, 42);
   });
@@ -403,7 +443,11 @@ describe('fieldToZod — widget: "hidden"', () => {
   });
 
   it("object default → z.any()", () => {
-    const s = fieldToZod({ name: "h", widget: "hidden", default: { foo: "bar" } });
+    const s = fieldToZod({
+      name: "h",
+      widget: "hidden",
+      default: { foo: "bar" },
+    });
     accepts(s, { anything: true });
     accepts(s, "even strings");
     accepts(s, null);
@@ -707,7 +751,10 @@ describe('fieldToZod — widget: "list"', () => {
 
 describe("fieldToZod — unknown/custom widget", () => {
   it("returns z.any() for an unknown widget name", () => {
-    const s = fieldToZod({ name: "x", widget: "my-custom-widget" } as unknown as Field);
+    const s = fieldToZod({
+      name: "x",
+      widget: "my-custom-widget",
+    } as unknown as Field);
     accepts(s, "string");
     accepts(s, 42);
     accepts(s, null);
@@ -715,7 +762,10 @@ describe("fieldToZod — unknown/custom widget", () => {
   });
 
   it("returns z.any() for another unknown widget", () => {
-    const s = fieldToZod({ name: "x", widget: "unknown-widget-xyz" } as unknown as Field);
+    const s = fieldToZod({
+      name: "x",
+      widget: "unknown-widget-xyz",
+    } as unknown as Field);
     accepts(s, undefined);
   });
 });

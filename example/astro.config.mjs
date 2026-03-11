@@ -1,6 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import sveltia from "@joknoll/astro-sveltia-cms";
+import sveltia from "astro-sveltiacms";
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,8 +11,11 @@ export default defineConfig({
       title: "My Custom CMS",
       config: {
         backend: {
-          name: "test-repo",
+          name: "github",
+          repo: "username/repo",
+          branch: "main",
         },
+
         media_folder: "public/media",
 
         collections: [

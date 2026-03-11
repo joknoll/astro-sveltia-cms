@@ -1,19 +1,19 @@
 {
-  "name": "@joknoll/astro-sveltia-cms",
-  "version": "0.1.1",
+  "name": "astro-sveltiacms",
+  "version": "0.1.0",
   "description": "Sveltia CMS integration for Astro",
   "keywords": [
     "astro-integration"
   ],
-  "homepage": "https://github.com/joknoll/astro-sveltia-cms#readme",
+  "homepage": "https://github.com/joknoll/astro-sveltiacms#readme",
   "bugs": {
-    "url": "https://github.com/joknoll/astro-sveltia-cms/issues"
+    "url": "https://github.com/joknoll/astro-sveltiacms/issues"
   },
   "license": "ISC",
   "author": "Johannes Knoll",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/joknoll/astro-sveltia-cms.git"
+    "url": "git+https://github.com/joknoll/astro-sveltiacms.git"
   },
   "directories": {
     "example": "example"
@@ -41,18 +41,18 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@sveltia/cms": "^0.145.0"
+    "@sveltia/cms": "^0.146.2"
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
-    "astro": "^5.18.0",
-    "oxfmt": "^0.36.0",
+    "astro": "^6.0.2",
+    "oxfmt": "^0.38.0",
     "oxlint": "^1.51.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "astro": "^4.0.0 || ^5.0.0"
+    "astro": "^6.0.2"
   },
   "publishConfig": {
     "access": "public"

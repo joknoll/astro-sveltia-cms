@@ -14,9 +14,9 @@ const minimalConfig: CmsConfig = {
 };
 
 describe("sveltiaCms — return shape", () => {
-  it('returns an integration named "astro-sveltia-cms"', () => {
+  it('returns an integration named "astro-sveltiacms"', () => {
     const integration = sveltiaCms({ config: minimalConfig });
-    expect(integration.name).toBe("astro-sveltia-cms");
+    expect(integration.name).toBe("astro-sveltiacms");
   });
 
   it("returns an object with a hooks property", () => {
@@ -44,11 +44,15 @@ describe("sveltiaCms — options handling", () => {
   });
 
   it("accepts a custom route", () => {
-    expect(() => sveltiaCms({ config: minimalConfig, route: "/cms" })).not.toThrow();
+    expect(() =>
+      sveltiaCms({ config: minimalConfig, route: "/cms" }),
+    ).not.toThrow();
   });
 
   it("accepts a custom title", () => {
-    expect(() => sveltiaCms({ config: minimalConfig, title: "My CMS" })).not.toThrow();
+    expect(() =>
+      sveltiaCms({ config: minimalConfig, title: "My CMS" }),
+    ).not.toThrow();
   });
 
   it("accepts all options together", () => {
@@ -58,7 +62,10 @@ describe("sveltiaCms — options handling", () => {
   });
 
   it("works with an empty collections array", () => {
-    const config: CmsConfig = { backend: { name: "test-repo" }, collections: [] };
+    const config: CmsConfig = {
+      backend: { name: "test-repo" },
+      collections: [],
+    };
     expect(() => sveltiaCms({ config })).not.toThrow();
   });
 

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { CmsConfig, EntryCollection, FileCollection } from "@sveltia/cms";
 
-const CONFIG_PATH = ".astro/integrations/astro-sveltia-cms/config.json";
+const CONFIG_PATH = ".astro/integrations/astro-sveltiacms/config.json";
 
 export function readCmsConfig(): CmsConfig {
   const configPath = `${process.cwd()}/${CONFIG_PATH}`;
@@ -16,15 +16,19 @@ export function readCmsConfig(): CmsConfig {
     }
     return parsed as CmsConfig;
   } catch (err) {
-    if (err instanceof Error && err.message.startsWith("[sveltiaLoader]")) throw err;
+    if (err instanceof Error && err.message.startsWith("[sveltiaLoader]"))
+      throw err;
     throw new Error(
       `[sveltiaLoader] Could not read CMS config from ${configPath}. ` +
-        `Make sure the astro-sveltia-cms integration is added to your astro.config.mjs.`,
+        `Make sure the astro-sveltiacms integration is added to your astro.config.mjs.`,
     );
   }
 }
 
-export function resolveCollection(config: CmsConfig, name: string): EntryCollection {
+export function resolveCollection(
+  config: CmsConfig,
+  name: string,
+): EntryCollection {
   const collections = config.collections ?? [];
   // Phase 1: find any named collection (EntryCollection or FileCollection).
   const match = collections.find((c) => "name" in c && c.name === name);
