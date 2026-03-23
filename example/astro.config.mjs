@@ -21,6 +21,20 @@ export default defineConfig({
 
         collections: [
           {
+            name: "authors",
+            label: "Authors",
+            label_singular: "Author",
+            folder: "src/content/authors",
+            create: true,
+            identifier_field: "name",
+            slug: "{{slug}}",
+            fields: [
+              { label: "Name", name: "name", widget: "string" },
+              { label: "Bio", name: "bio", widget: "text", required: false },
+              { label: "Avatar", name: "avatar", widget: "image", required: false },
+            ],
+          },
+          {
             name: "posts",
             label: "Posts",
             folder: "src/content/posts",
@@ -31,6 +45,15 @@ export default defineConfig({
             fields: [
               { label: "Title", name: "title", widget: "string" },
               { label: "Date", name: "date", widget: "datetime" },
+              {
+                label: "Author",
+                name: "author",
+                widget: "relation",
+                collection: "authors",
+                search_fields: ["name"],
+                value_field: "{{slug}}",
+                display_fields: ["name"],
+              },
               {
                 label: "Draft",
                 name: "draft",
