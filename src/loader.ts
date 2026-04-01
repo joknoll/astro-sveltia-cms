@@ -16,6 +16,12 @@ export {
   sveltiaSchema,
 } from "./schema.js";
 
+export type {
+  InferFieldOutput,
+  InferFieldsOutput,
+  InferCollectionOutput,
+} from "./infer.js";
+
 export type SveltiaLoader = Loader;
 export type SveltiaEntryCollection = EntryCollection;
 export type SveltiaField = Field;

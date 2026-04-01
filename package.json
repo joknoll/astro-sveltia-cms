@@ -35,6 +35,14 @@
       "types": "./dist/loader.d.ts",
       "import": "./dist/loader.js"
     },
+    "./type-gen": {
+      "types": "./dist/type-gen.d.ts",
+      "import": "./dist/type-gen.js"
+    },
+    "./infer": {
+      "types": "./dist/infer.d.ts",
+      "import": "./dist/infer.js"
+    },
     "./admin.astro": "./dist/admin.astro"
   },
   "publishConfig": {
