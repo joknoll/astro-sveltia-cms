@@ -4,6 +4,7 @@ import type { TypeOverrideMap } from "zod-to-ts";
 import { createAuxiliaryTypeStore, createTypeAlias, printNode, zodToTs } from "zod-to-ts";
 import { frontmatterFormats, sveltiaSchema } from "./schema.js";
 import type { SchemaContext } from "./schema.js";
+import type { InferCollectionOutput } from "./infer.js";
 
 type TypeOverrideFunction = TypeOverrideMap extends Map<unknown, infer V> ? V : never;
 
@@ -30,9 +31,25 @@ function relationOverride(collectionName: string): TypeOverrideFunction {
     ]);
 }
 
-export async function buildCollectionSchema(
-  collection: EntryCollection,
-): Promise<{ schema: z.ZodType; types: string }> {
+/**
+ * Build a Zod schema and TypeScript type string for a Sveltia CMS collection.
+ *
+ * When the collection is defined with preserved literal types (via a
+ * `const` generic parameter or `as const`), the returned schema carries
+ * the inferred output type — enabling downstream type safety without a
+ * manually maintained type map.
+ *
+ * @example
+ * ```ts
+ * function defineCollection<const C extends EntryCollection>(c: C) { return c; }
+ * const authors = defineCollection({ name: "authors", folder: "...", fields: [...] });
+ * const { schema } = await buildCollectionSchema(authors);
+ * // schema is typed as z.ZodType<{ name: string; bio?: string; ... }>
+ * ```
+ */
+export async function buildCollectionSchema<const C extends EntryCollection>(
+  collection: C,
+): Promise<{ schema: z.ZodType<InferCollectionOutput<C>>; types: string }> {
   const ctx: SchemaContext = {
     imageSchemas: [],
     relationSchemas: new Map(),
@@ -59,5 +76,12 @@ export async function buildCollectionSchema(
   const typeAlias = createTypeAlias(node, "Entry");
   const importLine =
     ctx.imageSchemas.length > 0 ? 'import type { ImageMetadata } from "astro";\n' : "";
-  return { schema, types: `${importLine}export ${printNode(typeAlias)}` };
+  // The runtime schema is correctly typed by z.object() but its return type
+  // is ZodObject<Record<string, ZodType>> which doesn't carry the inferred
+  // output shape. The cast bridges the gap — InferCollectionOutput<C> mirrors
+  // exactly what fieldToZod() produces for each field widget type.
+  return {
+    schema: schema as unknown as z.ZodType<InferCollectionOutput<C>>,
+    types: `${importLine}export ${printNode(typeAlias)}`,
+  };
 }

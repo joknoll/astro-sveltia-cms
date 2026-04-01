@@ -261,7 +261,7 @@ export function fieldToZod(field: Field, ctx?: SchemaContext): z.ZodType {
 }
 
 export function sveltiaSchema(
-  fields: Field[],
+  fields: readonly Field[],
   {
     excludeBody = true,
     ctx,
