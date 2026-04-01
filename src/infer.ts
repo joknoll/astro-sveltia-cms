@@ -102,7 +102,12 @@ export type InferFieldOutput<F extends Field> =
 									: F extends { widget: "file" }
 										? string
 										: // ── Select (extracts literal option values when const) ──
-											F extends {
+											// Empty options → any (matches runtime selectValuesToZod)
+											F extends { widget: "select"; options: readonly [] }
+											? F extends { multiple: true }
+												? any[]
+												: any
+											: F extends {
 													widget: "select";
 													multiple: true;
 													options: readonly (infer O)[];
@@ -120,23 +125,43 @@ export type InferFieldOutput<F extends Field> =
 													? (string | number | null)[]
 													: F extends { widget: "select" }
 														? string | number | null
-														: // ── Relation ────────────────────────────────────────────
-															F extends { widget: "relation"; multiple: true }
-															? string[]
-															: F extends { widget: "relation" }
-																? string
-																: // ── KeyValue ────────────────────────────────────────────
-																	F extends { widget: "keyvalue" }
-																	? Record<string, string>
-																	: // ── Code ────────────────────────────────────────────────
-																		F extends {
-																				widget: "code";
-																				output_code_only: true;
-																			}
-																		? string
-																		: F extends { widget: "code" }
-																			? { code: string; lang: string }
-																			: // ── Hidden (infer from default value type) ──────────────
+														: // ── Relation (runtime validates { collection, id } objects) ─
+															F extends {
+																	widget: "relation";
+																	multiple: true;
+																	collection: infer Col extends string;
+																}
+															? { collection: Col; id: string }[]
+															: F extends {
+																		widget: "relation";
+																		collection: infer Col extends string;
+																	}
+																? { collection: Col; id: string }
+																: // Relation fallback (non-const collection name)
+																	F extends { widget: "relation"; multiple: true }
+																	? { collection: string; id: string }[]
+																	: F extends { widget: "relation" }
+																		? { collection: string; id: string }
+																		: // ── KeyValue ────────────────────────────────────────────
+																			F extends { widget: "keyvalue" }
+																			? Record<string, string>
+																			: // ── Code (respects custom keys when const-narrowed) ─────
+																				F extends {
+																						widget: "code";
+																						output_code_only: true;
+																					}
+																				? string
+																				: F extends {
+																							widget: "code";
+																							keys: {
+																								code: infer CK extends string;
+																								lang: infer LK extends string;
+																							};
+																						}
+																					? { [K in CK | LK]: string }
+																					: F extends { widget: "code" }
+																						? { code: string; lang: string }
+																						: // ── Hidden (infer from default value type) ──────────────
 																				F extends { widget: "hidden"; default: string }
 																				? string
 																				: F extends { widget: "hidden"; default: number }
@@ -204,7 +229,9 @@ export type InferFieldOutput<F extends Field> =
 type InferVariants<
 	Types extends readonly VariableFieldType[],
 	TypeKey extends string,
-> = Types[number] extends infer V
+> = Types extends readonly []
+	? Record<string, unknown>
+	: Types[number] extends infer V
 	? V extends VariableFieldType
 		? Prettify<
 				{ [K in TypeKey]: V["name"] } & (V extends {

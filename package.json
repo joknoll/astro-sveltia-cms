@@ -40,7 +40,8 @@
       "import": "./dist/type-gen.js"
     },
     "./infer": {
-      "types": "./dist/infer.d.ts"
+      "types": "./dist/infer.d.ts",
+      "import": "./dist/infer.js"
     },
     "./admin.astro": "./dist/admin.astro"
   },
